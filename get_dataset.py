@@ -1,23 +1,35 @@
-import torch
-import torch.nn as nn
-import torchvision
-from torchvision.datasets import VOCDetection
+import wget
+import math
+import tarfile
 
-def download_pascal_voc(root='C:\\data\\pascalvoc'):
-    # Download and Extract the Pascal VOC 2007 Dataset
-    VOCDetection(root=root + "\\2007", 
-                            year='2007', 
-                            image_set='train', 
-                            download=True)
 
-    # Download and Extract the Pascal VOC 2012 Dataset
-    VOCDetection(root=root + "\\2012", 
-                            year='2012', 
-                            image_set='train', 
-                            download=True)  
+def bar_custom(current, total, width=80):
+    width=30
+    avail_dots = width-2
+    shaded_dots = int(math.floor(float(current) / total * avail_dots))
+    percent_bar = '[' + '■'*shaded_dots + ' '*(avail_dots-shaded_dots) + ']'
+    progress = "%d%% %s [%d / %d]" % (current / total * 100, percent_bar, current, total) 
+    return progress
+
+def download(url, out_path='C:\\data\\pascalvoc'):
+    wget.download(url, out=out_path, bar=bar_custom)
+    print("\n")
+
 
 def main():
-    download_pascal_voc()
+    path_voc = 'C:\\data\\pascalvoc'
+    
+    # VOC2007 DATASET
+    url_voc2007_trainval = "http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar"
+    url_voc2007_test = "http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar"
+    
+    # VOC2012 DATASET
+    url_voc2012_trainval = "http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar"
+    
+    # Download VOC DATASETS
+    download(url_voc2007_trainval)
+    download(url_voc2007_test)
+    download(url_voc2012_trainval)
 
 if __name__ == "__main__":
     main()
