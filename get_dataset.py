@@ -1,6 +1,7 @@
 import wget
 import math
 import tarfile
+from tqdm import tqdm
 
 
 def bar_custom(current, total, width=80):
@@ -15,6 +16,15 @@ def download(url, out_path='C:\\data\\pascalvoc'):
     wget.download(url, out=out_path, bar=bar_custom)
     print("\n")
 
+def extract(url, out_path):
+    # open your tar.gz file
+    with tarfile.open(url) as tar:
+        # Go over each member
+        for member in tqdm(iterable=tar.getmembers(), 
+                           total=len(tar.getmembers())):
+            # Extract member
+            tar.extract(member=member, path=out_path)
+        tar.close()
 
 def main():
     path_voc = 'C:\\data\\pascalvoc'
@@ -30,6 +40,11 @@ def main():
     download(url_voc2007_trainval)
     download(url_voc2007_test)
     download(url_voc2012_trainval)
+
+    # Extract tar files
+    extract(path_voc + "\\VOCtrainval_06-Nov-2007.tar", path_voc)
+    extract(path_voc + "\\VOCtest_06-Nov-2007.tar", path_voc)
+    extract(path_voc + "\\VOCtrainval_11-May-2012.tar", path_voc)
 
 if __name__ == "__main__":
     main()
