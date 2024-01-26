@@ -6,6 +6,35 @@ import math
 import tarfile
 from tqdm import tqdm
 
+import shutil
+import csv
+import glob
+
+
+
+def bar_custom(current, total, width=80):
+    width=30
+    avail_dots = width-2
+    shaded_dots = int(math.floor(float(current) / total * avail_dots))
+    percent_bar = '[' + '■'*shaded_dots + ' '*(avail_dots-shaded_dots) + ']'
+    progress = "%d%% %s [%d / %d]" % (current / total * 100, percent_bar, current, total) 
+    return progress
+
+def download(url, out_path='C:\\data\\pascalvoc'):
+    wget.download(url, out=out_path, bar=bar_custom)
+    print("\n")
+
+def extract(url, out_path):
+    # open your tar.gz file
+    with tarfile.open(url) as tar:
+        # Go over each member
+        for member in tqdm(iterable=tar.getmembers(), 
+                           total=len(tar.getmembers())):
+            # Extract member
+            tar.extract(member=member, path=out_path)
+        tar.close()
+
+
 # "https://pjreddie.com/media/files/voc_label.py"
 def convert(size, box):
     dw = 1./size[0]
@@ -53,31 +82,32 @@ def voc_label():
             convert_annotation(path_voc, year, image_id, classes)
         list_file.close()    
 
+# https://github.com/aladdinpersson/...
+def generate_csv(path):
+    read_train = open(path + "train.txt", "r").readlines()
 
-def bar_custom(current, total, width=80):
-    width=30
-    avail_dots = width-2
-    shaded_dots = int(math.floor(float(current) / total * avail_dots))
-    percent_bar = '[' + '■'*shaded_dots + ' '*(avail_dots-shaded_dots) + ']'
-    progress = "%d%% %s [%d / %d]" % (current / total * 100, percent_bar, current, total) 
-    return progress
+    with open(path + "train.csv", mode="w", newline="") as train_file:
+        for line in read_train:
+            image_file = line.split("/")[-1].replace("\n", "")
+            text_file = image_file.replace(".jpg", ".txt")
+            data = [image_file, text_file]
+            writer = csv.writer(train_file)
+            writer.writerow(data)
 
-def download(url, out_path='C:\\data\\pascalvoc'):
-    wget.download(url, out=out_path, bar=bar_custom)
-    print("\n")
+    read_train = open(path + "test.txt", "r").readlines()
 
-def extract(url, out_path):
-    # open your tar.gz file
-    with tarfile.open(url) as tar:
-        # Go over each member
-        for member in tqdm(iterable=tar.getmembers(), 
-                           total=len(tar.getmembers())):
-            # Extract member
-            tar.extract(member=member, path=out_path)
-        tar.close()
+    with open(path + "test.csv", mode="w", newline="") as train_file:
+        for line in read_train:
+            image_file = line.split("/")[-1].replace("\n", "")
+            text_file = image_file.replace(".jpg", ".txt")
+            data = [image_file, text_file]
+            writer = csv.writer(train_file)
+            writer.writerow(data)
+
+
 
 def main():
-    path_voc = 'C:\\data\\pascalvoc'
+    path_voc = 'C:/data/pascalvoc/'
     
     # VOC2007 DATASET
     url_voc2007_trainval = "http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar"
@@ -92,13 +122,67 @@ def main():
     download(url_voc2012_trainval)
 
     # Extract tar files
-    extract(path_voc + "\\VOCtrainval_06-Nov-2007.tar", path_voc)
-    extract(path_voc + "\\VOCtest_06-Nov-2007.tar", path_voc)
-    extract(path_voc + "\\VOCtrainval_11-May-2012.tar", path_voc)
+    extract(path_voc + "VOCtrainval_06-Nov-2007.tar", path_voc)
+    extract(path_voc + "VOCtest_06-Nov-2007.tar", path_voc)
+    extract(path_voc + "VOCtrainval_11-May-2012.tar", path_voc)
 
     # Clean up data from xml files
     # download("https://pjreddie.com/media/files/voc_label.py")
     voc_label()
+
+    ## Organize files
+    # Define the list of files
+    file_list = ['2007_train.txt', '2007_val.txt', '2012_train.txt', '2012_val.txt']
+    file_test = '2007_test.txt' 
+
+    # Create and open a new file - train.txt
+    with open(path_voc + 'train.txt', 'w') as outfile:
+        for fname in file_list:
+            with open(path_voc + fname) as infile:
+                outfile.write(infile.read())
+            infile.close()
+    outfile.close()
+
+    # Create and open a new file - test.txt
+    with open(path_voc + 'test.txt', 'w') as outfile:
+        with open(path_voc + file_test) as infile:
+            outfile.write(infile.read())
+        infile.close()
+    outfile.close()
+
+    # Move txt files we won't be using to clean up a little bit
+    os.makedirs(path_voc + "old_txt_files")
+
+    for fname in file_list:
+        shutil.move(os.path.join(path_voc, fname), os.path.join(path_voc, 'old_txt_files'))
+    shutil.move(os.path.join(path_voc, file_test), os.path.join(path_voc, 'old_txt_files'))
+
+    # Create csv files (columns : jpg file name, txt file name)
+    generate_csv(path_voc)
+
+    # Create a data folder used for training, validation, testing
+    os.makedirs(path_voc + "data")
+    os.makedirs(path_voc + "data/images")
+    os.makedirs(path_voc + "data/labels")
+
+    # Move files *.jpg
+    jpg_sources = ['VOCdevkit/VOC2007/JPEGImages/*.jpg', 'VOCdevkit/VOC2012/JPEGImages/*.jpg']
+    for source_pattern in jpg_sources:
+        for file in glob.glob(path_voc + source_pattern):
+            shutil.move(file, path_voc + 'data/images/' + file.split('\\')[-1])
+
+    # Move files *.txt
+    txt_sources = ['VOCdevkit/VOC2007/labels/*.txt', 'VOCdevkit/VOC2012/labels/*.txt']
+    for source_pattern in txt_sources:
+        for file in glob.glob(path_voc + source_pattern):
+            shutil.move(file, path_voc + 'data/labels/' + file.split('\\')[-1])
+
+    # We don't need VOCdevkit folder anymore, can remove
+    shutil.rmtree(path_voc + "VOCdevkit", ignore_errors=True)
+    shutil.move(os.path.join(path_voc, 'train.txt'), os.path.join(path_voc, 'old_txt_files'))
+    shutil.move(os.path.join(path_voc, 'test.txt'), os.path.join(path_voc, 'old_txt_files'))
+
+
 
 if __name__ == "__main__":
     main()
