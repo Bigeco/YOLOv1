@@ -195,6 +195,9 @@ class YoloLoss():
                 #localization loss 구하기
                 weighted_localization_err = self.localizationLoss(bbox_true, responsible_box)
 
+                #classification loss 구하기
+                classification_err = self.classificationLoss(class_true, class_pred)
+
         # Get confidence loss 
         object_loss, no_object_loss = self.confidence_loss(y_true, y_pred)
 
