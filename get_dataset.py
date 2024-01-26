@@ -11,7 +11,6 @@ import csv
 import glob
 
 
-
 def bar_custom(current, total, width=80):
     width=30
     avail_dots = width-2
@@ -104,9 +103,7 @@ def generate_csv(path):
             writer = csv.writer(train_file)
             writer.writerow(data)
 
-
-
-def main():
+def get_voc_dataset():
     path_voc = 'C:/data/pascalvoc/'
     
     # VOC2007 DATASET
@@ -182,7 +179,8 @@ def main():
     shutil.move(os.path.join(path_voc, 'train.txt'), os.path.join(path_voc, 'old_txt_files'))
     shutil.move(os.path.join(path_voc, 'test.txt'), os.path.join(path_voc, 'old_txt_files'))
 
-
+def main():
+    get_voc_dataset()
 
 if __name__ == "__main__":
     main()
