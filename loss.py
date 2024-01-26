@@ -202,9 +202,10 @@ class YoloLoss():
         object_loss, no_object_loss = self.confidence_loss(y_true, y_pred)
 
         loss = (
-            self.lambda_coord
+            self.lambda_coord * weighted_localization_err
             + object_loss
             + self.lambda_noobj * no_object_loss
+            + classification_err
         )
 
         return loss
