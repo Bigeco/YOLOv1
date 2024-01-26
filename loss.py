@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import numpy as np
 from utils import intersection_over_union
 
@@ -8,6 +9,7 @@ class YoloLoss():
     '''
     def __init__(self):
         super(YoloLoss, self).__init__()
+        self.mse = nn.MSELoss(reduction="sum")
 
         self.lambda_noobj = 0.5
         self.lambda_coord = 5
@@ -44,6 +46,80 @@ class YoloLoss():
         weighted_localization_err = torch.multiply(localization_err, 5.0)  # λ_coord 곱하기
 
         return weighted_localization_err #localizationLoss
+    
+    def confidence_loss(self, y_pred, y_true):
+        """
+        Parameters:
+            y_pred (tensor): (BATCH_SIZE, [x1, y1, w1, h1, p1, x2, y2, w2, h2, p2, c1,...,c20])
+            y_true (tnesor): (BATCH_SIZE, [x, y, w, h, p, c1,..., c20])
+        
+        Progress:
+            (1) Calculate IoU for each
+            (2) Take the box with highest IoU out of the two prediction
+            (3) Calculate confidence loss - Object Loss 
+            (4) Calculate confidence loss - No Object Loss
+
+        References:
+            https://github.com/aladdinpersson/Machine-Learning-Collection/blob/master/ML/Pytorch/object_detection/YOLO/loss.py
+
+        """
+        # y_pred (tensor): [c1,...,c20, p1, x1, y1, w1, h1, p2, x2, y2, w2, h2, p2]
+        # y_true (tnesor): [c1,...,c20, p, x, y, w, h] 
+        # 라고 가정할 때는
+        # y_pred[..., 20], y_pred[..., 25]
+        # y_true[..., 20]
+        
+        
+        # (1) Calculate IoU for each
+        iou_b1 = intersection_over_union(y_pred[..., :4], y_true[..., :4], "midpoint")
+        iou_b2 = intersection_over_union(y_pred[..., 5:9], y_true[..., :4], "midpoint")
+        
+
+        # (2) Take the box with highest IoU out of the two prediction
+        ious = torch.cat([iou_b1.unsqueeze(0), iou_b2.unsqueeze(0)], dim=0) # shape: [2, BATCH_SIZE, S, S, 30]
+        # Return values and indices
+        # values (iou_maxes): Maximum value Tensor(BATCH_SIZE * S * S * 30) in each column
+        # indices (bestbox): the index of the maximum values(BATCH_SIZE * S * S * 30) ​​in each column.
+        # Examples: 
+        #   [[[0, 1, 4, 5],[5, 6, 7, 8]],[[9, 10, 11, 12],[13, 14, 15, 16]]]
+        #   [[[1, 2, 3, 4],[5, 6, 7, 8]],[[9, 10, 11, 12],[13, 14, 15, 16]]]
+        #   return 
+        #       [[[1, 2, 4, 5],[5, 6, 7, 8]],[[9, 10, 11, 12],[13, 14, 15, 16]]]
+        #       [[[0, 0, 1, 1],[0, 0, 0, 0]],[[0, 0, 0, 0],[0, 0, 0, 0]]]
+        #       0: 0 idx element
+        #       1: 1 idx element
+        # Real Code:
+        iou_maxes, bestbox = torch.max(ious, dim=0) 
+        
+        
+        # (3) Calculate confidence loss - Object Loss 
+        confidence_pred_box1 = y_pred[..., 4]
+        confidence_pred_box2 = y_pred[..., 9]
+        exists_box = y_true[..., 4] # Iobj_i
+
+        pred_box = (
+            bestbox * confidence_pred_box2 + (1-bestbox) * confidence_pred_box1
+        )
+
+        object_loss = self.mse(
+            torch.flatten(exists_box * pred_box),
+            torch.flatten(exists_box * confidence_pred_box1)
+        )
+
+                 
+        # (4) Calculate confidence loss - No Object Loss
+        no_object_loss = self.mse(
+            torch.flatten((1 - exists_box) * confidence_pred_box1, start_dim=1),
+            torch.flatten((1 - exists_box) * exists_box, start_dim=1)
+        )
+
+        no_object_loss += self.mse(
+            torch.flatten((1 - exists_box) * confidence_pred_box2, start_dim=1),
+            torch.flatten((1 - exists_box) * exists_box, start_dim=1)
+        )
+
+        return object_loss, no_object_loss
+        
 
     def classificationLoss(self, class_true, class_pred):
         # 1. 실제 확률값에서 예측 확률값 빼고 제곱
@@ -63,7 +139,6 @@ class YoloLoss():
             y_true (tnesor): [x, y, w, h, p, c1,..., c20]
 
         """
-        batch_loss = 0 #return 값
         count = len(y_true) #y_true의 행의 개수
         for i in range(0, count):
             #파라미터로 받은 값을 복제
@@ -120,6 +195,15 @@ class YoloLoss():
                 #localization loss 구하기
                 weighted_localization_err = self.localizationLoss(bbox_true, responsible_box)
 
-        return batch_loss
+        # Get confidence loss 
+        object_loss, no_object_loss = self.confidence_loss(y_true, y_pred)
+
+        loss = (
+            self.lambda_coord
+            + object_loss
+            + self.lambda_noobj * no_object_loss
+        )
+
+        return loss
 
 
