@@ -91,22 +91,22 @@ class YoloLoss():
 
                 #Iou가 더 큰 bounding box 선택
                 if iou_bbox1_pred >= iou_bbox2_pred :
-                    self.responsible_box = bbox1_pred.clone().detach().requires_grad_(True)
-                    self.responsible_bbox_confidence = bbox1_pred_confidence.clone().detach().requires_grad_(True)
-                    self.non_responsible_bbox_confidence = bbox2_pred_confidence.clone().detach().requires_grad_(True)
+                    responsible_box = bbox1_pred.clone().detach().requires_grad_(True)
+                    responsible_bbox_confidence = bbox1_pred_confidence.clone().detach().requires_grad_(True)
+                    non_responsible_bbox_confidence = bbox2_pred_confidence.clone().detach().requires_grad_(True)
                 else :
-                    self.responsible_box = bbox2_pred.clone().detach().requires_grad_(True)
-                    self.responsible_bbox_confidence = bbox2_pred_confidence.clone().detach().requires_grad_(True)
-                    self.non_responsible_bbox_confidence = bbox1_pred_confidence.clone().detach().requires_grad_(True)
-                responsible_box = self.responsible_box
-                responsible_bbox_confidence = self.responsible_bbox_confidence
-                non_responsible_bbox_confidence = self.non_responsible_bbox_confidence
+                    responsible_box = bbox2_pred.clone().detach().requires_grad_(True)
+                    responsible_bbox_confidence = bbox2_pred_confidence.clone().detach().requires_grad_(True)
+                    non_responsible_bbox_confidence = bbox1_pred_confidence.clone().detach().requires_grad_(True)
+                responsible_box = responsible_box
+                responsible_bbox_confidence = responsible_bbox_confidence
+                non_responsible_bbox_confidence = non_responsible_bbox_confidence
 
                 #Iobj_i 값 구하기
-                self.obj_exist = torch.ones_like(bbox_true_confidence)
+                obj_exist = torch.ones_like(bbox_true_confidence)
                 box_true_np = bbox_true.detach().numpy()
                 if box_true_np[0] == 0.0 and box_true_np[1] == 0.0 and box_true_np[2] == 0.0 and box_true_np[3] == 0.0:
-                    self.obj_exist = torch.zeros_like(bbox_true_confidence)
+                    obj_exist = torch.zeros_like(bbox_true_confidence)
 
                 #localization loss 구하기
                 weighted_localization_err = self.localizationLoss(bbox_true, responsible_box)
