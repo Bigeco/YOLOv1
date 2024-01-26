@@ -19,9 +19,7 @@ class YoloLoss():
             bbox_true: 실제 (x,y,w,h) 값
             responsible_box: 예측된 (x,y,w,h) 값
 
-        Returns:
-
-        
+        Returns: localization loss값
         '''
 
         #실제 x,y,w,h값과 예측된 x,y,w,h값의 차이 계산
@@ -45,8 +43,19 @@ class YoloLoss():
         localization_err = torch.multiply(localization_err, self.obj_exist) #1obj(i) 곱하기
         weighted_localization_err = torch.multiply(localization_err, 5.0)  # λ_coord 곱하기
 
-        return weighted_localization_err
-    
+        return weighted_localization_err #localizationLoss
+
+    def classificationLoss(self, class_true, class_pred):
+        # 1. 실제 확률값에서 예측 확률값 빼고 제곱
+        classification_err = torch.pow(torch.subtract(class_true, class_pred), 2.0)
+        # 2. 원소 값들을 모두 더하기
+        classification_err = torch.sum(classification_err)
+        # 3. Iobj_i값과 곱하기
+        # obj_exist값은 위에서 정의됨-값이 존재하는지 여부를 판단하는 값
+        classification_err = torch.multiply(classification_err, self.obj_exist)
+
+        return classification_err #classificationLoss
+
     def forward(self, y_pred, y_true):
         """
         Parameters:
@@ -103,10 +112,10 @@ class YoloLoss():
                 non_responsible_bbox_confidence = non_responsible_bbox_confidence
 
                 #Iobj_i 값 구하기
-                obj_exist = torch.ones_like(bbox_true_confidence)
+                self.obj_exist = torch.ones_like(bbox_true_confidence)
                 box_true_np = bbox_true.detach().numpy()
                 if box_true_np[0] == 0.0 and box_true_np[1] == 0.0 and box_true_np[2] == 0.0 and box_true_np[3] == 0.0:
-                    obj_exist = torch.zeros_like(bbox_true_confidence)
+                    self.obj_exist = torch.zeros_like(bbox_true_confidence)
 
                 #localization loss 구하기
                 weighted_localization_err = self.localizationLoss(bbox_true, responsible_box)
