@@ -3,15 +3,10 @@ import numpy as np
 from utils import intersection_over_union
 
 class YoloLoss():
+    '''
+    Calculate the loss for YOLOv1 model
+    '''
     def __init__(self):
-        '''
-        Calculate the loss for YOLOv1 model
-
-        Parameters:
-            y_pred (tensor): [x1, y1, w1, h1, p1, x2, y2, w2, h2, p2, c1,...,c20]
-            y_true (tnesor): [x, y, w, h, p, c1,..., c20]
-
-        '''
         super(YoloLoss, self).__init__()
 
         self.lambda_noobj = 0.5
@@ -20,10 +15,15 @@ class YoloLoss():
 
     def localizationLoss(self, bbox_true, responsible_box):
         '''
-        :param bbox_true: 실제 x,y,w,h값
-        :param responsible_box: 예측된 x,y,w,h값
-        :return:
+        Parameters:
+            bbox_true: 실제 (x,y,w,h) 값
+            responsible_box: 예측된 (x,y,w,h) 값
+
+        Returns:
+
+        
         '''
+
         #실제 x,y,w,h값과 예측된 x,y,w,h값의 차이 계산
         localization_err_x = torch.pow(torch.subtract(bbox_true[0], responsible_box[0]), 2)  # x손실값 계산
         localization_err_y = torch.pow(torch.subtract(bbox_true[1], responsible_box[1]), 2)  # y손실값 계산
@@ -48,6 +48,12 @@ class YoloLoss():
         return weighted_localization_err
     
     def forward(self, y_pred, y_true):
+        """
+        Parameters:
+            y_pred (tensor): [x1, y1, w1, h1, p1, x2, y2, w2, h2, p2, c1,...,c20]
+            y_true (tnesor): [x, y, w, h, p, c1,..., c20]
+
+        """
         batch_loss = 0 #return 값
         count = len(y_true) #y_true의 행의 개수
         for i in range(0, count):
