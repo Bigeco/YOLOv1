@@ -27,7 +27,7 @@ class VOCDataset(torch.utils.data.Dataset):
         boxes = []
         with open(label_path) as f:
             for label in f.readlines():
-                #(bounding box) 11 0.34419263456090654 0.611  0.262
+                #(bounding box) 11 0.34419263456090654 0.611 0.4164305949008499 0.262
                 class_label, x, y, width, height = [
                     float(x) if float(x) != int(float(x)) else int(x)
                     for x in label.replace("\n", "").split()
