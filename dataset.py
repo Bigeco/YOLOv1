@@ -34,7 +34,7 @@ class VOCDataset(torch.utils.data.Dataset):
                 ]
 
                 boxes.append([class_label, x, y, width, height]) #라벨 읽어오기
-        0.4164305949008499
+       
         img_path = os.path.join(self.img_dir, self.annotations.iloc[index, 0]) #이미지 읽어오기
         image = Image.open(img_path)
         boxes = torch.tensor(boxes)
