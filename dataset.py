@@ -29,8 +29,8 @@ class VOCDataset(torch.utils.data.Dataset):
             for label in f.readlines():
                 #(bounding box) 11 0.34419263456090654 0.611 0.4164305949008499 0.262
                 class_label, x, y, width, height = [
-                    float(x) if float(x) != int(float(x)) else int(x)
-                    for x in label.replace("\n", "").split()
+                    float(x) if float(x) != int(float(x)) else int(x) #형변환
+                    for x in label.split()
                 ]
 
                 boxes.append([class_label, x, y, width, height]) #라벨 읽어오기
