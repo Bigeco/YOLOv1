@@ -26,7 +26,6 @@ architecture = [
 
 # Yolo v1 Model Architecture
 architecture_YOLO = [
-	[(512, 1, 1),(1024, 3, 1),2],
 	(1024, 3, 1),
 	(1024, 3, 2),
 	(1024, 3, 1),
