@@ -39,52 +39,73 @@ transform_voc = transforms.Compose([
     [transforms.Resize((448, 448)), transforms.ToTensor(),]
 ])
 
-dataset_cifar = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-dataset_aug_cifar = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=aug_transform)
-train_dataset_cifar = ConcatDataset([dataset_cifar, dataset_aug_cifar])
-test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
-
-# Data Loader - Pascal VOC Dataset
-# transform = 
-train_dataset_voc = VOCDataset(csv_file = "C:/data/pascalvoc", transform=transform_voc)
-test_dataset_voc = VOCDataset(csv_file = "C:/data/pascalvoc", transform=transform_voc)
-# cpu를 사용하므로 batch_size를 1로 설정
-train_dataloader_voc = DataLoader(train_dataset_voc, batch_size=1, shuffle=True, num_workers=4)
-test_dataloader_voc = DataLoader(test_dataset_voc, batch_size=1, shuffle=True, num_workers=4)
-
-# Reset model
-pretrained_model = PreTrained().to(device)
-model = YOLOv1(pretrained_model, split_size=7, num_boxes=2, num_classes=20).to(device)
-
-# Define loss function and optimizer
-criterion = YoloLoss()
-optimizer = optim.Adam(
-    model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY
-)
-#optim_momentum = optim.SGD(model.parameters(),lr=LEARNING_RATE, momentum=0.9)
 
 
+def train(train_loader, model, optimizer, criterion):
+    train_loss = []
 
-# training loop
-for epoch in range(EPOCHS):
-    pass
+    for epoch in range(EPOCHS):
+        model.train()
+        for images, labels in tqdm(train_loader):
+            x, y = images.to(device), labels.to(device)
+
+            optimizer.zero_grad()
+
+            output = model(x)
+            loss = criterion(output, y)
+            loss.backward()
+            optimizer.step()
+
+            train_loss.append(loss=loss.item())
+
+        print(f'Epoch : [{epoch}] Train Loss : [{np.mean(train_loss):.5f}]')
+
+    return model, optimizer, criterion
 
 
+def main():
+    ## PreTrain
+    # Reset model
+    pretrained_model = PreTrained().to(device)
 
-train_loss = []
+    # Define loss function and optimizer
+    criterion_p = YoloLoss()
+    optimizer_p = optim.Adam(
+        pretrained_model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY
+    )
+    # optim_momentum = optim.SGD(model.parameters(),lr=LEARNING_RATE, momentum=0.9)
 
-# YOLO V1 Loop
-for epoch in range(EPOCHS):
-    for images, labels in tqdm(train_dataloader_voc):
-        x, y = images.to(device), y.to(device)
+    # Define dataset
+    dataset_cifar = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+    dataset_aug_cifar = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=aug_transform)
+    train_dataset_cifar = ConcatDataset([dataset_cifar, dataset_aug_cifar])
+    test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 
-        optimizer.zero_grad()
+    # Define dataloader - cifar
 
-        output = model(x)
-        loss = criterion(output, y)
-        loss.backward()
-        optimizer.step()
 
-        train_loss.append(loss=loss.item())
+    # Training
+    pretrained_model, criterion_p, optimizer_p = train(train_dataset_cifar, pretrained_model, criterion_p, optimizer_p)
 
-    print(f'Epoch : [{epoch}] Train Loss : [{np.mean(train_loss):.5f}]')
+
+    ## YOLOv1 Train
+    # Reset model
+    model = YOLOv1(pretrained_model, split_size=7, num_boxes=2, num_classes=20).to(device)
+    
+    # Define loss function and optimizer
+    criterion = YoloLoss()
+    optimizer = optim.Adam(
+        model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY
+    )
+    # optim_momentum = optim.SGD(model.parameters(),lr=LEARNING_RATE, momentum=0.9)
+
+    # Define dataset
+    train_dataset_voc = VOCDataset(csv_file = "C:/data/pascalvoc", transform=transform_voc)
+    test_dataset_voc = VOCDataset(csv_file = "C:/data/pascalvoc", transform=transform_voc)
+    
+    # Define dataloader - Pascal VOC Dataset (we use cpu, so batch_size is 1)
+    train_dataloader_voc = DataLoader(train_dataset_voc, batch_size=1, shuffle=True, num_workers=4)
+    test_dataloader_voc = DataLoader(test_dataset_voc, batch_size=1, shuffle=True, num_workers=4)
+
+    # Training
+    model, criterion, optimizer = train(train_dataloader_voc, model, criterion, optimizer)
