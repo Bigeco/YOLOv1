@@ -10,6 +10,9 @@ import shutil
 import csv
 import glob
 
+import torchvision
+import torchvision.transforms as transforms
+
 
 def bar_custom(current, total, width=80):
     width=30
@@ -181,8 +184,16 @@ def get_voc_dataset():
     shutil.move(os.path.join(path_voc, 'train.txt'), os.path.join(path_voc, 'old_txt_files'))
     shutil.move(os.path.join(path_voc, 'test.txt'), os.path.join(path_voc, 'old_txt_files'))
 
+def get_cifar_dataset():
+    path_cifar = 'C:/data/cifar/'
+
+    torchvision.datasets.CIFAR10(root=path_cifar, train=True, download=True)
+    torchvision.datasets.CIFAR10(root=path_cifar, train=True, download=True)    
+    torchvision.datasets.CIFAR10(root=path_cifar, train=False, download=True)
+
 def main():
     get_voc_dataset()
+    get_cifar_dataset()
 
 if __name__ == "__main__":
     main()
