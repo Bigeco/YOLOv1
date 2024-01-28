@@ -20,6 +20,7 @@ EPOCHS = 10
 # https://www.kaggle.com/code/mainscientist/cifar-10
 transform = transforms.Compose([
     transforms.ToTensor(),
+    transforms.Resize((224,224)),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
@@ -28,8 +29,14 @@ aug_transform = transforms.Compose([
     transforms.RandomHorizontalFlip(p=0.5),
     transforms.RandomVerticalFlip(p=0.5),
     transforms.ToTensor(),
+    transforms.Resize((224,224)),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
+
+transform_voc = transforms.Compose([
+    [transforms.Resize((448, 448)), transforms.ToTensor(),]
+])
+
 dataset_cifar = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
 dataset_aug_cifar = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=aug_transform)
 train_dataset_cifar = ConcatDataset([dataset_cifar, dataset_aug_cifar])
@@ -37,20 +44,24 @@ test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download
 
 # Data Loader - Pascal VOC Dataset
 # transform = 
-train_dataset_voc = VOCDataset(csv_file = "C:/data/cifar", transform=None)
-test_dataset_voc = VOCDataset(csv_file = "C:/data/cifar", transform=None)
-# train_dataloader_voc = DataLoader(train_dataset_voc, batch_size=16, shuffle=True, num_workers=4)
-# test_dataloader_voc = DataLoader(test_dataset_voc, batch_size=16, shuffle=True, num_workers=4)
+train_dataset_voc = VOCDataset(csv_file = "C:/data/pascalvoc", transform=transform_voc)
+test_dataset_voc = VOCDataset(csv_file = "C:/data/pascalvoc", transform=transform_voc)
+# cpu를 사용하므로 batch_size를 1로 설정
+train_dataloader_voc = DataLoader(train_dataset_voc, batch_size=1, shuffle=True, num_workers=4)
+test_dataloader_voc = DataLoader(test_dataset_voc, batch_size=1, shuffle=True, num_workers=4)
 
 # Reset model
 pretrained_model = PreTrained().to(device)
-model = YOLOv1().to(device)
+model = YOLOv1(pretrained_model, split_size=7, num_boxes=2, num_classes=20).to(device)
 
 # Define loss function and optimizer
 criterion = YoloLoss()
 optimizer = optim.Adam(
     model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY
 )
+#optim_momentum = optim.SGD(model.parameters(),lr=LEARNING_RATE, momentum=0.9)
+
+
 
 # training loop
 for epoch in range(EPOCHS):

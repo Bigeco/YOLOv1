@@ -63,13 +63,13 @@ class PreTrained(nn.Module):
 		return model
 
 class YOLOv1(nn.Module):
-	def __init__(self, PreTrainedModel):
+	def __init__(self, PreTrainedModel, **kwargs):
 		super(YOLOv1, self).__init__()
 		self.backbone = PreTrainedModel
 		self.architecture = architecture_YOLO
 		self.in_channel = in_channel
 		self.conv = self.create_model(self.architecture)
-		self.fc = self.create_fc()
+		self.fc = self.create_fc(**kwargs)
 
 	def forward(self, x):
 		out = self.backbone(x)
