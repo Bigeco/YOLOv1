@@ -113,6 +113,8 @@ def get_voc_dataset():
     # VOC2012 DATASET
     url_voc2012_trainval = "http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar"
     
+    os.makedirs(path_voc)
+    
     # Download VOC DATASETS
     download(url_voc2007_trainval)
     download(url_voc2007_test)
