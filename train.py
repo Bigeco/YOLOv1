@@ -82,34 +82,38 @@ def main():
     train_dataset_cifar = ConcatDataset([dataset_cifar, dataset_aug_cifar])
     test_dataset = torchvision.datasets.CIFAR10(root=path_cifar, train=False, download=False, transform=transform)
 
+    print(train_dataset_cifar.__getitem__(0))
+
     # Define dataloader - cifar
 
 
-    # Training
-    pretrained_model, criterion_p, optimizer_p = train(train_dataset_cifar, pretrained_model, criterion_p, optimizer_p)
+    # # Training
+    # pretrained_model, criterion_p, optimizer_p = train(train_dataset_cifar, pretrained_model, criterion_p, optimizer_p)
 
 
-    ## YOLOv1 Train
-    # Reset model
-    model = YOLOv1(pretrained_model, split_size=7, num_boxes=2, num_classes=20).to(device)
+    # ## YOLOv1 Train
+    # # Reset model
+    # model = YOLOv1(pretrained_model, split_size=7, num_boxes=2, num_classes=20).to(device)
     
-    # Define loss function and optimizer
-    criterion = YoloLoss()
-    optimizer = optim.Adam(
-        model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY
-    )
-    # optim_momentum = optim.SGD(model.parameters(),lr=LEARNING_RATE, momentum=0.9)
+    # # Define loss function and optimizer
+    # criterion = YoloLoss()
+    # optimizer = optim.Adam(
+    #     model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY
+    # )
+    # # optim_momentum = optim.SGD(model.parameters(),lr=LEARNING_RATE, momentum=0.9)
 
     # Define dataset
     train_dataset_voc = VOCDataset(csv_file = "C:/data/pascalvoc", transform=transform_voc)
     test_dataset_voc = VOCDataset(csv_file = "C:/data/pascalvoc", transform=transform_voc)
-    
-    # Define dataloader - Pascal VOC Dataset (we use cpu, so batch_size is 1)
-    train_dataloader_voc = DataLoader(train_dataset_voc, batch_size=1, shuffle=True, num_workers=4)
-    test_dataloader_voc = DataLoader(test_dataset_voc, batch_size=1, shuffle=True, num_workers=4)
+    print(train_dataset_voc.__getitem__(0))
 
-    # Training
-    model, criterion, optimizer = train(train_dataloader_voc, model, criterion, optimizer)
+
+    # # Define dataloader - Pascal VOC Dataset (we use cpu, so batch_size is 1)
+    # train_dataloader_voc = DataLoader(train_dataset_voc, batch_size=1, shuffle=True, num_workers=4)
+    # test_dataloader_voc = DataLoader(test_dataset_voc, batch_size=1, shuffle=True, num_workers=4)
+
+    # # Training
+    # model, criterion, optimizer = train(train_dataloader_voc, model, criterion, optimizer)
 
 if __name__ == "__main__":
     main()

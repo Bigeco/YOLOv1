@@ -4,6 +4,8 @@ import pandas as pd
 from PIL import Image
 
 
+
+
 class VOCDataset(torch.utils.data.Dataset):
     def __init__(
         self,
@@ -19,6 +21,7 @@ class VOCDataset(torch.utils.data.Dataset):
         self.S = S
         self.B = B
         self.C = C
+        
     def __len__(self):
         return len(self.annotations)
 
@@ -29,12 +32,12 @@ class VOCDataset(torch.utils.data.Dataset):
             for label in f.readlines():
                 #(bounding box) 11 0.34419263456090654 0.611 0.4164305949008499 0.262
                 class_label, x, y, width, height = [
-                    float(x) if float(x) != int(float(x)) else int(x) #형변환
+                    float(x) if float(x) != int(float(x)) else int(x) # 형변환
                     for x in label.split()
                 ]
 
                 boxes.append([class_label, x, y, width, height]) #라벨 읽어오기
-       
+
         img_path = os.path.join(self.img_dir, self.annotations.iloc[index, 0]) #이미지 읽어오기
         image = Image.open(img_path)
         boxes = torch.tensor(boxes)
