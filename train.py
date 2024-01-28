@@ -8,6 +8,8 @@ import torchvision.transforms as transforms
 from dataset import VOCDataset
 from model import PreTrained, YOLOv1
 from loss import YoloLoss
+from tqdm import tqdm
+import numpy as np
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -66,3 +68,23 @@ optimizer = optim.Adam(
 # training loop
 for epoch in range(EPOCHS):
     pass
+
+
+
+train_loss = []
+
+# YOLO V1 Loop
+for epoch in range(EPOCHS):
+    for images, labels in tqdm(train_dataloader_voc):
+        x, y = images.to(device), y.to(device)
+
+        optimizer.zero_grad()
+
+        output = model(x)
+        loss = criterion(output, y)
+        loss.backward()
+        optimizer.step()
+
+        train_loss.append(loss=loss.item())
+
+    print(f'Epoch : [{epoch}] Train Loss : [{np.mean(train_loss):.5f}]')
