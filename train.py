@@ -76,10 +76,11 @@ def main():
     # optim_momentum = optim.SGD(model.parameters(),lr=LEARNING_RATE, momentum=0.9)
 
     # Define dataset
-    dataset_cifar = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-    dataset_aug_cifar = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=aug_transform)
+    path_cifar = 'C:/data/cifar/'
+    dataset_cifar = torchvision.datasets.CIFAR10(root=path_cifar, train=True, download=False, transform=transform)
+    dataset_aug_cifar = torchvision.datasets.CIFAR10(root=path_cifar, train=True, download=False, transform=aug_transform)
     train_dataset_cifar = ConcatDataset([dataset_cifar, dataset_aug_cifar])
-    test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+    test_dataset = torchvision.datasets.CIFAR10(root=path_cifar, train=False, download=False, transform=transform)
 
     # Define dataloader - cifar
 
@@ -109,3 +110,6 @@ def main():
 
     # Training
     model, criterion, optimizer = train(train_dataloader_voc, model, criterion, optimizer)
+
+if __name__ == "__main__":
+    main()
