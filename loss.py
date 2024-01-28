@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 from utils import intersection_over_union
 
-class YoloLoss():
+class YoloLoss(nn.Module):
     '''
     Calculate the loss for YOLOv1 model
     '''
