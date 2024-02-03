@@ -3,9 +3,6 @@ import os
 import pandas as pd
 from PIL import Image
 
-
-
-
 class VOCDataset(torch.utils.data.Dataset):
     def __init__(
         self,
@@ -43,7 +40,10 @@ class VOCDataset(torch.utils.data.Dataset):
         boxes = torch.tensor(boxes)
 
         if self.transform: #이미지 해상도 등 변경
-            image, boxes = self.transform(image, boxes)
+            #print('image:',image,'boxes:',boxes)
+            image = self.transform(image)
+            #boxes = self.transform(boxes)
+            #image, boxes = self.transform(image = image, target = boxes)
 
         #이미지 데이터에서 셀 나누기
         label_matrix = torch.zeros((self.S, self.S, self.C + 5 * self.B))

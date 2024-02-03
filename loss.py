@@ -139,15 +139,18 @@ class YoloLoss(nn.Module):
             y_true (tnesor): [x, y, w, h, p, c1,..., c20]
 
         """
+        #print('y_true:', y_pred)
         count = len(y_true) #y_true의 행의 개수
         for i in range(0, count):
             #파라미터로 받은 값을 복제
             y_true_unit = y_true[i].clone().detach().requires_grad_(True)
+            #print('y_true_unit:',y_true_unit)
             y_pred_unit = y_pred[i].clone().detach().requires_grad_(True)
 
             #❓velog 코드에서는 -1 자리에 49를 썼는데 왜 49를 썼는지 이해하지 못함
-            y_true_unit = torch.reshape(y_true_unit, (-1,25))
-            y_pred_unit = torch.reshape(y_pred_unit, (-1,30))
+            print('y_true_unit의 shape', y_pred_unit.shape)
+            y_true_unit = torch.reshape(y_true_unit, (49,25))
+            y_pred_unit = torch.reshape(y_pred_unit, (49,30))
 
             loss = 0
 
