@@ -184,14 +184,17 @@ def get_voc_dataset():
     file_list = ['2007_train.txt', '2007_val.txt', '2012_train.txt', '2012_val.txt']
     file_test = '2007_test.txt' 
 
+
+    print("Generating train.txt ...")
     # 1. Create and open a new file - train.txt
     with open(path_voc + 'train.txt', 'w') as outfile:
-        for fname in file_list:
+        for fname in tqdm(file_list):
             with open(path_voc + fname) as infile:
                 outfile.write(infile.read())
             infile.close()
     outfile.close()
 
+    print("Generating test.txt ...")
     # 2. Create and open a new file - test.txt
     with open(path_voc + 'test.txt', 'w') as outfile:
         with open(path_voc + file_test) as infile:
@@ -234,13 +237,13 @@ def get_voc_dataset():
     # Move files *.jpg
     jpg_sources = ['VOCdevkit/VOC2007/JPEGImages/*.jpg', 'VOCdevkit/VOC2012/JPEGImages/*.jpg']
     for source_pattern in jpg_sources:
-        for file in glob.glob(path_voc + source_pattern):
+        for file in tqdm(glob.glob(path_voc + source_pattern)):
             shutil.move(file, path_voc + 'data/images/' + file.split('\\')[-1])
 
     # Move files *.txt
     txt_sources = ['VOCdevkit/VOC2007/labels/*.txt', 'VOCdevkit/VOC2012/labels/*.txt']
     for source_pattern in txt_sources:
-        for file in glob.glob(path_voc + source_pattern):
+        for file in tqdm(glob.glob(path_voc + source_pattern)):
             shutil.move(file, path_voc + 'data/labels/' + file.split('\\')[-1])
     
     """
