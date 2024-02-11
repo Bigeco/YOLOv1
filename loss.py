@@ -10,7 +10,6 @@ class YoloLoss(nn.Module):
     def __init__(self):
         super(YoloLoss, self).__init__()
         self.mse = nn.MSELoss(reduction="sum")
-
         self.lambda_noobj = 0.5
         self.lambda_coord = 5
 
@@ -50,8 +49,8 @@ class YoloLoss(nn.Module):
     def confidence_loss(self, y_pred, y_true):
         """
         Parameters:
-            y_pred (tensor): (BATCH_SIZE, [x1, y1, w1, h1, p1, x2, y2, w2, h2, p2, c1,...,c20])
-            y_true (tnesor): (BATCH_SIZE, [x, y, w, h, p, c1,..., c20])
+            y_pred (tensor): (BATCH_SIZE, [c1,..., c20, p1, x1, y1, w1, h1, p2, x2, y2, w2, h2])
+            y_true (tnesor): (BATCH_SIZE, [c1,..., c20, p, x, y, w, h])
         
         Progress:
             (1) Calculate IoU for each
@@ -62,17 +61,10 @@ class YoloLoss(nn.Module):
         References:
             https://github.com/aladdinpersson/Machine-Learning-Collection/blob/master/ML/Pytorch/object_detection/YOLO/loss.py
 
-        """
-        # y_pred (tensor): [c1,...,c20, p1, x1, y1, w1, h1, p2, x2, y2, w2, h2, p2]
-        # y_true (tnesor): [c1,...,c20, p, x, y, w, h] 
-        # 라고 가정할 때는
-        # y_pred[..., 20], y_pred[..., 25]
-        # y_true[..., 20]
-        
-        
+        """        
         # (1) Calculate IoU for each
-        iou_b1 = intersection_over_union(y_pred[..., :4], y_true[..., :4], "midpoint")
-        iou_b2 = intersection_over_union(y_pred[..., 5:9], y_true[..., :4], "midpoint")
+        iou_b1 = intersection_over_union(y_pred[..., 21:25], y_true[..., 21:25], "midpoint")
+        iou_b2 = intersection_over_union(y_pred[..., 26:30], y_true[..., 21:25], "corner")
         
 
         # (2) Take the box with highest IoU out of the two prediction
@@ -93,9 +85,9 @@ class YoloLoss(nn.Module):
         
         
         # (3) Calculate confidence loss - Object Loss 
-        confidence_pred_box1 = y_pred[..., 4]
-        confidence_pred_box2 = y_pred[..., 9]
-        exists_box = y_true[..., 4] # Iobj_i
+        confidence_pred_box1 = y_pred[..., 20:21]
+        confidence_pred_box2 = y_pred[..., 25:26]
+        exists_box = y_true[..., 20:21] # Iobj_i
 
         pred_box = (
             bestbox * confidence_pred_box2 + (1-bestbox) * confidence_pred_box1
@@ -135,8 +127,8 @@ class YoloLoss(nn.Module):
     def forward(self, y_pred, y_true):
         """
         Parameters:
-            y_pred (tensor): [x1, y1, w1, h1, p1, x2, y2, w2, h2, p2, c1,...,c20]
-            y_true (tnesor): [x, y, w, h, p, c1,..., c20]
+            y_pred (tensor): [c1,..., c20, p1, x1, y1, w1, h1, p2, x2, y2, w2, h2]
+            y_true (tnesor): [c1,..., c20, p, x, y, w, h]
 
         """
         #print('y_true:', y_pred)
