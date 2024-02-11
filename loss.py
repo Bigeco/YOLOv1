@@ -31,9 +31,9 @@ class YoloLoss(nn.Module):
 
         # 셀 안에 객체가 존재하지 않을 경우 w, h값은 null값
         # nan값 제거하기
-        if torch.isnan(localization_err_w).detach().numpy() == True:
+        if torch.isnan(localization_err_w) == True:
             localization_err_w = torch.zeros_like(localization_err_w)
-        if torch.isnan(localization_err_h).detach().numpy() == True:
+        if torch.isnan(localization_err_h) == True:
             localization_err_h = torch.zeros_like(localization_err_h)
 
         # x,y끼리 w,z끼리 더하기
@@ -183,7 +183,7 @@ class YoloLoss(nn.Module):
 
                 #Iobj_i 값 구하기
                 self.obj_exist = torch.ones_like(bbox_true_confidence)
-                box_true_np = bbox_true.detach().numpy()
+                box_true_np = bbox_true
                 if box_true_np[0] == 0.0 and box_true_np[1] == 0.0 and box_true_np[2] == 0.0 and box_true_np[3] == 0.0:
                     self.obj_exist = torch.zeros_like(bbox_true_confidence)
 
@@ -194,7 +194,7 @@ class YoloLoss(nn.Module):
                 classification_err = self.classificationLoss(class_true, class_pred)
 
         # Get confidence loss 
-        object_loss, no_object_loss = self.confidence_loss(y_true, y_pred)
+        object_loss, no_object_loss = self.confidence_loss(y_pred, y_true)
 
         loss = (
             self.lambda_coord * weighted_localization_err
