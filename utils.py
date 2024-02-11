@@ -26,15 +26,15 @@ def intersection_over_union(boxes_preds, boxes_labels, box_format):
     
     # Create (min_x, min_y, max_x, max_y) if box_format is "midpoint" 
     if box_format == "midpoint":
-        x_center_p = boxes_preds[..., 0]
-        y_center_p = boxes_preds[..., 1]
-        width_p = boxes_preds[..., 2]
-        height_p = boxes_preds[..., 3]
+        x_center_p = boxes_preds[..., 0:1]
+        y_center_p = boxes_preds[..., 1:2]
+        width_p = boxes_preds[..., 2:3]
+        height_p = boxes_preds[..., 3:4]
 
-        x_center_l = boxes_labels[..., 0]
-        y_center_l = boxes_labels[..., 1]
-        width_l = boxes_labels[..., 2]
-        height_l = boxes_labels[..., 3]
+        x_center_l = boxes_labels[..., 0:1]
+        y_center_l = boxes_labels[..., 1:2]
+        width_l = boxes_labels[..., 2:3]
+        height_l = boxes_labels[..., 3:4]
 
         min_x_p = x_center_p - width_p / 2
         max_x_p = x_center_p + width_p / 2
@@ -48,15 +48,15 @@ def intersection_over_union(boxes_preds, boxes_labels, box_format):
 
     # Define (min_x, min_y, max_x, max_y) if box_format is "corner"
     if box_format == "corner":
-        min_x_p = boxes_preds[..., 0]
-        max_x_p = boxes_preds[..., 1]
-        min_y_p = boxes_preds[..., 2]
-        max_y_p = boxes_preds[..., 3]
+        min_x_p = boxes_preds[..., 0:1]
+        max_x_p = boxes_preds[..., 1:2]
+        min_y_p = boxes_preds[..., 2:3]
+        max_y_p = boxes_preds[..., 3:4]
 
-        min_x_l = boxes_labels[..., 0]
-        max_x_l = boxes_labels[..., 1]
-        min_y_l = boxes_labels[..., 2]
-        max_y_l = boxes_labels[..., 3]
+        min_x_l = boxes_labels[..., 0:1]
+        max_x_l = boxes_labels[..., 1:2]
+        min_y_l = boxes_labels[..., 2:3]
+        max_y_l = boxes_labels[..., 3:4]
 
         width_p = max_x_p - min_x_p
         height_p = max_y_p - min_y_p

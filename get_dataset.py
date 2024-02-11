@@ -13,7 +13,9 @@ import glob
 import torchvision
 import torchvision.transforms as transforms
 
-
+"""
+파일 다운로드 시 커스텀된 bar 띄우기
+"""
 def bar_custom(current, total, width=80):
     width=30
     avail_dots = width-2
@@ -22,10 +24,24 @@ def bar_custom(current, total, width=80):
     progress = "%d%% %s [%d / %d]" % (current / total * 100, percent_bar, current, total) 
     return progress
 
+"""
+PascalVoc tar 파일 다운받기 
+
+Parameters:
+    url: 다운받는 파일의 url
+    out_path: 파일을 다운받을 파일 경로
+"""
 def download(url, out_path='C:\\data\\pascalvoc'):
     wget.download(url, out=out_path, bar=bar_custom)
     print("\n")
 
+"""
+tar 파일 압출 풀기
+
+Parameters:
+    url: tar 파일 경로
+    out_path: 파일을 압축하여 받는 파일 경로
+"""
 def extract(url, out_path):
     # open your tar.gz file
     with tarfile.open(url) as tar:
@@ -36,7 +52,12 @@ def extract(url, out_path):
             tar.extract(member=member, path=out_path)
         tar.close()
 
+"""
+비정형 데이터를 정형 데이터로 변환
 
+Reference:
+    "https://pjreddie.com/media/files/voc_label.py"
+"""
 # "https://pjreddie.com/media/files/voc_label.py"
 def convert(size, box):
     dw = 1./size[0]
@@ -67,13 +88,13 @@ def convert_annotation(path, year, image_id, classes):
         bb = convert((w,h), b)
         out_file.write(str(cls_id) + " " + " ".join([str(a) for a in bb]) + '\n')
 
-def voc_label():
+def voc_label(path='C:/data/pascalvoc/'):
     sets=[('2012', 'train'), ('2012', 'val'), ('2007', 'train'), ('2007', 'val'), ('2007', 'test')]
     classes = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", 
                "car", "cat", "chair", "cow", "diningtable", "dog", 
                "horse", "motorbike", "person", "pottedplant", "sheep", 
                "sofa", "train", "tvmonitor"]   
-    path_voc = 'C:/data/pascalvoc/'
+    path_voc = path
 
     for year, image_set in sets:
         os.makedirs(path_voc + f'VOCdevkit/VOC{year}/labels/', exist_ok=True)
@@ -84,7 +105,12 @@ def voc_label():
             convert_annotation(path_voc, year, image_id, classes)
         list_file.close()    
 
-# https://github.com/aladdinpersson/...
+"""
+이미지 파일 이름 (*.jpg)와 라벨 데이터(*.txt) 가 열로 이루어진 csv 파일 생성
+
+Reference:
+    https://github.com/aladdinpersson/...
+"""
 def generate_csv(path):
     read_train = open(path + "train.txt", "r").readlines()
 
@@ -109,6 +135,9 @@ def generate_csv(path):
 def get_voc_dataset():
     path_voc = 'C:/data/pascalvoc/'
     
+    """
+    (1) 데이터 파일 url 정의
+    """
     # VOC2007 DATASET
     url_voc2007_trainval = "http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar"
     url_voc2007_test = "http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar"
@@ -116,42 +145,67 @@ def get_voc_dataset():
     # VOC2012 DATASET
     url_voc2012_trainval = "http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar"
     
+
+    """
+    (2) Pascal Voc Datasets tar 파일 다운로드 
+    """
     os.makedirs(path_voc)
-    
+    print("Downloading PascalVOC Dataset ...")
+
     # Download VOC DATASETS
     download(url_voc2007_trainval)
     download(url_voc2007_test)
     download(url_voc2012_trainval)
+
+
+    """
+    (3) 모든 tar 파일 압출 풀기
+    """
+    print("Extracting tar files ...")
 
     # Extract tar files
     extract(path_voc + "VOCtrainval_06-Nov-2007.tar", path_voc)
     extract(path_voc + "VOCtest_06-Nov-2007.tar", path_voc)
     extract(path_voc + "VOCtrainval_11-May-2012.tar", path_voc)
 
+    """
+    (4-1) 비정형 데이터를 정형 데이터로 변환
+
+    Reference: 
+        https://pjreddie.com/media/files/voc_label.py
+    """
     # Clean up data from xml files
-    # download("https://pjreddie.com/media/files/voc_label.py")
     voc_label()
 
-    ## Organize files
+    """
+    (4-2) (label, x center, y center, width, height) 로 이루어진 txt 파일들을 모두 한 txt 파일(train.txt, test.txt)로 합치기
+    """
     # Define the list of files
     file_list = ['2007_train.txt', '2007_val.txt', '2012_train.txt', '2012_val.txt']
     file_test = '2007_test.txt' 
 
-    # Create and open a new file - train.txt
+
+    print("Generating train.txt ...")
+    # 1. Create and open a new file - train.txt
     with open(path_voc + 'train.txt', 'w') as outfile:
-        for fname in file_list:
+        for fname in tqdm(file_list):
             with open(path_voc + fname) as infile:
                 outfile.write(infile.read())
             infile.close()
     outfile.close()
 
-    # Create and open a new file - test.txt
+    print("Generating test.txt ...")
+    # 2. Create and open a new file - test.txt
     with open(path_voc + 'test.txt', 'w') as outfile:
         with open(path_voc + file_test) as infile:
             outfile.write(infile.read())
         infile.close()
     outfile.close()
 
+
+    """
+    txt 파일 정리
+    """
     # Move txt files we won't be using to clean up a little bit
     os.makedirs(path_voc + "old_txt_files")
 
@@ -159,8 +213,21 @@ def get_voc_dataset():
         shutil.move(os.path.join(path_voc, fname), os.path.join(path_voc, 'old_txt_files'))
     shutil.move(os.path.join(path_voc, file_test), os.path.join(path_voc, 'old_txt_files'))
 
+
+
+    """
+    (5) *.jpg, *.txt 가 열로 이루어진 csv 파일 생성
+    """
+    print("Generating csv file columns: [*jpg, *.txt] ...")
+
     # Create csv files (columns : jpg file name, txt file name)
     generate_csv(path_voc)
+
+
+    """
+    (6) 데이터 파일 폴더 images 와 labels 로 바꾸기
+    """
+    print("Generating images and labels folder ...")
 
     # Create a data folder used for training, validation, testing
     os.makedirs(path_voc + "data")
@@ -170,15 +237,18 @@ def get_voc_dataset():
     # Move files *.jpg
     jpg_sources = ['VOCdevkit/VOC2007/JPEGImages/*.jpg', 'VOCdevkit/VOC2012/JPEGImages/*.jpg']
     for source_pattern in jpg_sources:
-        for file in glob.glob(path_voc + source_pattern):
+        for file in tqdm(glob.glob(path_voc + source_pattern)):
             shutil.move(file, path_voc + 'data/images/' + file.split('\\')[-1])
 
     # Move files *.txt
     txt_sources = ['VOCdevkit/VOC2007/labels/*.txt', 'VOCdevkit/VOC2012/labels/*.txt']
     for source_pattern in txt_sources:
-        for file in glob.glob(path_voc + source_pattern):
+        for file in tqdm(glob.glob(path_voc + source_pattern)):
             shutil.move(file, path_voc + 'data/labels/' + file.split('\\')[-1])
-
+    
+    """
+    파일 삭제
+    """
     # We don't need VOCdevkit folder anymore, can remove
     shutil.rmtree(path_voc + "VOCdevkit", ignore_errors=True)
     shutil.move(os.path.join(path_voc, 'train.txt'), os.path.join(path_voc, 'old_txt_files'))

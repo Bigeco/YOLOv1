@@ -36,6 +36,7 @@ architecture_YOLO = [
 	(1024,1024, 3, 1),
 	(1024,1024, 3, 1),
 ]
+
 # class PreTrained(nn.Module):
 # 	def __init__(self):
 # 		super(PreTrained, self).__init__()
@@ -65,12 +66,14 @@ architecture_YOLO = [
 # 			elif type(x) == str:
 # 				model.add_module(maxPN, nn.MaxPool2d(kernel_size=(2,2), stride=(2,2)))
 # 		return model
+
 VGGNet = torch.hub.load('pytorch/vision:v0.10.0', 'vgg16', pretrained=True)
 for i in range(len(VGGNet.features[:-1])):
 	if type(VGGNet.features[i]) == type(nn.Conv2d(64,64,3)) :
 		VGGNet.features[i].weight.requires_grad = False
 		VGGNet.features[i].bias.requires_grad = False
 		VGGNet.features[i].padding = 1
+
 class YOLOv1(nn.Module):
 	def __init__(self, PreTrainedModel, **kwargs):
 		super(YOLOv1, self).__init__()
@@ -100,15 +103,6 @@ class YOLOv1(nn.Module):
 				model.add_module(convN+str(i), nn.Conv2d(in_channels=x[0], out_channels=x[1], kernel_size=x[2], padding=x[3]))
 			else:
 				model.add_module(convN+str(i), nn.Conv2d(in_channels=x[0], out_channels=x[1], kernel_size=x[2], padding=x[3], stride=x[4]))
-			# if type(x) == tuple:
-			# 	model.add_module(convN, nn.Conv2d(in_channel, x[0], kernel_size=x[1], stride=x[2]))
-			# 	model.add_module('leakyRelu', nn.LeakyReLU(0.1))
-			# elif type(x) == list:
-			# 	for _ in range(x[2]):
-			# 		model.add_module(convN, nn.Conv2d(in_channel, x[0][0], kernel_size=x[0][1], stride=x[0][2]))
-			# 		model.add_module('leakyRelu', nn.LeakyReLU(0.1))
-			# 		model.add_module(convN, nn.Conv2d(in_channel, x[1][0], kernel_size=x[1][1], stride=x[1][2]))
-			# 		model.add_module('leakyRelu', nn.LeakyReLU(0.1))
 			model.add_module(leaky+str(i), nn.LeakyReLU(0.1))
 		model.add_module('flatten', nn.Flatten())
 		print('model: ',model)
